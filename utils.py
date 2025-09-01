@@ -42,7 +42,7 @@ def create_base_path(
 
     if resource_type == "models":
         for layer, prefix in modeling_layers.items():
-            if layer == "staging":
+            if layer == "staging" and source_system != "global":
                 for pref in prefix:
                     base_path = [layer, source_system]
                     if pref == "base":
