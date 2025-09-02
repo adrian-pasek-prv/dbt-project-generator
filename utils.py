@@ -1,5 +1,6 @@
 import os
 from typing import Optional
+from pathlib import Path
 
 ROOT_DIR = "."
 RESOURCE_TYPES = ["models", "data_tests", "seeds", "macros"]
@@ -318,3 +319,13 @@ def generate_project_paths(
                     )
                     all_paths.update(paths)
     return sorted(all_paths)
+
+def create_project_structure(paths: set) -> None:
+    """Create project structure based on the provided paths"""
+    for path in paths:
+        # Create a Path object
+        file_path = Path(path)
+        # Create parent directories if they don't exist
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        # Touch empty file at the end of path
+        file_path.touch(exist_ok=True)
