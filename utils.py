@@ -111,6 +111,8 @@ def create_base_path(
         add_metadata_files(paths, root_dir, resource_type, ["utils"], f"_{prefix}_utils", metadata_files)
         paths.add(join_path(root_dir, resource_type, "utils", f"{prefix}_utils__example_cents_to_dollars.sql"))
 
+        # Add dbt_project.yml at the root
+        paths.add(os.path.join(root_dir, "dbt_project.yml"))
     return sorted(paths)
 
 def generate_project_paths(
