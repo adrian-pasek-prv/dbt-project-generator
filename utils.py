@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 ROOT_DIR = "."
 RESOURCE_TYPES = ["models", "data_tests", "seeds", "macros"]
@@ -21,17 +22,22 @@ def add_metadata_files(paths: set, root_dir: str, resource_type: str, path_parts
     for metadata_file in metadata_files:
         paths.add(join_path(root_dir, resource_type, *path_parts, f"{prefix}{metadata_file}"))
 
-def get_example_model(model_type: str, source_system: str = None, organization: str = None, domain: str = None) -> str:
+def get_example_model(model_type: str, source_system: str = None, organization: Optional[str] = None, domain: str = None) -> str:
     """Generate example model filename."""
-    if domain and organization:
-        return f"{model_type}_{organization}_{domain}__example_model.sql"
-    return f"{model_type}_{source_system}__example_model.sql"
+    parts = [model_type]
+    if organization:
+        parts.append(organization)
+    elif source_system:
+        parts.append(source_system)
+    if domain:
+        parts.append(domain)
+    return f"{'_'.join(parts)}__example_model.sql"
 
 def create_base_path(
     resource_type: str,
     source_system: str,
-    organization: str,
     domain: str,
+    organization: Optional[str] = None,
     root_dir: str = ROOT_DIR,
     modeling_layers: dict = MODELING_LAYERS,
     model_types: list = MODEL_TYPES,
@@ -54,20 +60,24 @@ def create_base_path(
                     if pref != "base":
                         paths.add(join_path(root_dir, resource_type, layer, source_system, f"_{pref}_{source_system}__sources.yml"))
                     
-                    paths.add(join_path(root_dir, resource_type, *base_path, get_example_model(model_type=pref, source_system=source_system)))
+                    paths.add(join_path(root_dir, resource_type, *base_path, get_example_model(pref, source_system=source_system)))
 
             elif layer == "intermediate":
-                base_path = [layer, organization, domain]
-                add_metadata_files(paths, root_dir, resource_type, base_path, f"_{prefix}_{organization}_{domain}", metadata_files)
-                paths.add(join_path(root_dir, resource_type, layer, organization, domain, 
-                                   get_example_model(model_type=prefix, organization=organization, domain=domain)))
+                base_path = [layer]
+                base_path.extend([organization, domain] if organization else [domain])
+                name_prefix = f"_{prefix}_{organization}_{domain}" if organization else f"_{prefix}_{domain}"
+                add_metadata_files(paths, root_dir, resource_type, base_path, name_prefix, metadata_files)
+                paths.add(join_path(root_dir, resource_type, *base_path, 
+                                   get_example_model(prefix, organization=organization, domain=domain)))
 
             elif layer == "marts":
                 for model_type in model_types:
-                    base_path = [layer, organization, model_type, domain]
-                    add_metadata_files(paths, root_dir, resource_type, base_path, f"{model_type}_{organization}_{domain}", metadata_files)
+                    base_path = [layer]
+                    base_path.extend([organization, model_type, domain] if organization else [model_type, domain])
+                    name_prefix = f"{model_type}_{organization}_{domain}" if organization else f"{model_type}_{domain}"
+                    add_metadata_files(paths, root_dir, resource_type, base_path, name_prefix, metadata_files)
                     paths.add(join_path(root_dir, resource_type, *base_path, 
-                                       get_example_model(model_type=model_type, organization=organization, domain=domain)))
+                                       get_example_model(model_type, organization=organization, domain=domain)))
 
     elif resource_type == "data_tests":
         for test_type in data_tests_types:
@@ -75,21 +85,28 @@ def create_base_path(
                 paths.add(join_path(root_dir, resource_type, test_type, f"_test_{test_type}__docs.md"))
                 paths.add(join_path(root_dir, resource_type, test_type, f"test_{test_type}_example_dates_not_in_the_future.sql"))
             else:
-                base_path = [test_type, organization, domain]
-                paths.add(join_path(root_dir, resource_type, *base_path, f"_test_{test_type}_{organization}_{domain}__docs.md"))
-                paths.add(join_path(root_dir, resource_type, *base_path, f"test_{test_type}_{organization}_{domain}__example_test.sql"))
+                base_path = [test_type]
+                base_path.extend([organization, domain] if organization else [domain])
+                name_parts = [test_type, organization, domain] if organization else [test_type, domain]
+                paths.add(join_path(root_dir, resource_type, *base_path, f"_test_{'_'.join(name_parts)}__docs.md"))
+                paths.add(join_path(root_dir, resource_type, *base_path, f"test_{'_'.join(name_parts)}__example_test.sql"))
 
     elif resource_type == "seeds":
         prefix = "seed"
-        base_path = [organization, domain]
-        add_metadata_files(paths, root_dir, resource_type, base_path, f"_{prefix}_{organization}_{domain}", metadata_files)
-        paths.add(join_path(root_dir, resource_type, *base_path, f"{prefix}_{organization}_{domain}__example_seed.csv"))
+        base_path = [organization, domain] if organization else [domain]
+        name_prefix = f"_{prefix}_{organization}_{domain}" if organization else f"_{prefix}_{domain}"
+        add_metadata_files(paths, root_dir, resource_type, base_path, name_prefix, metadata_files)
+        name_parts = [prefix, organization, domain] if organization else [prefix, domain]
+        paths.add(join_path(root_dir, resource_type, *base_path, f"{'_'.join(name_parts)}__example_seed.csv"))
 
     elif resource_type == "macros":
         prefix = "macro"
-        base_path = [organization, domain]
-        add_metadata_files(paths, root_dir, resource_type, base_path, f"_{prefix}_{organization}_{domain}", metadata_files)
-        paths.add(join_path(root_dir, resource_type, *base_path, f"{prefix}_{organization}_{domain}__example_generate_payment_methods.sql"))
+        base_path = [organization, domain] if organization else [domain]
+        name_prefix = f"_{prefix}_{organization}_{domain}" if organization else f"_{prefix}_{domain}"
+        add_metadata_files(paths, root_dir, resource_type, base_path, name_prefix, metadata_files)
+        name_parts = [prefix, organization, domain] if organization else [prefix, domain]
+        paths.add(join_path(root_dir, resource_type, *base_path, 
+                          f"{'_'.join(name_parts)}__example_generate_payment_methods.sql"))
         
         add_metadata_files(paths, root_dir, resource_type, ["utils"], f"_{prefix}_utils", metadata_files)
         paths.add(join_path(root_dir, resource_type, "utils", f"{prefix}_utils__example_cents_to_dollars.sql"))
@@ -100,7 +117,7 @@ def generate_project_paths(
         root_dir: str = ROOT_DIR,
         resource_types: list = RESOURCE_TYPES,
         source_systems: list = ["stripe", "shopify"],
-        organizations: list = ["cee", "latam", "global"],
+        organizations: Optional[list] = None,
         domains: list = ["sales", "marketing", "core"],
         modeling_layers: dict = MODELING_LAYERS,
         model_types: list = MODEL_TYPES,
@@ -111,13 +128,28 @@ def generate_project_paths(
     all_paths = set()
     for resource_type in resource_types:
         for source_system in source_systems:
-            for organization in organizations:
+            if organizations:
+                for organization in organizations:
+                    for domain in domains:
+                        paths = create_base_path(
+                            resource_type,
+                            source_system,
+                            domain,
+                            organization,
+                            root_dir,
+                            modeling_layers,
+                            model_types,
+                            data_tests_types,
+                            metadata_files,
+                        )
+                        all_paths.update(paths)
+            else:
                 for domain in domains:
                     paths = create_base_path(
                         resource_type,
                         source_system,
-                        organization,
                         domain,
+                        None,
                         root_dir,
                         modeling_layers,
                         model_types,
@@ -126,10 +158,3 @@ def generate_project_paths(
                     )
                     all_paths.update(paths)
     return sorted(all_paths)
-
-paths = generate_project_paths(root_dir="./my_dbt_project",
-                               source_systems=["single_platform", "gecad"],
-                               organizations=["payupoland", "payuromania"],
-                               domains=["merchant_cash", "core"])
-for path in paths:
-    print(path)
