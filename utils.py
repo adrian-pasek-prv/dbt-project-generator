@@ -320,9 +320,12 @@ def generate_project_paths(
                     all_paths.update(paths)
     return sorted(all_paths)
 
-def create_project_structure(paths: set) -> None:
+def create_project_structure(paths: set, print_only: bool = True) -> None:
     """Create project structure based on the provided paths"""
     for path in paths:
+        if print_only:
+            print(path)
+            continue
         # Create a Path object
         file_path = Path(path)
         # Create parent directories if they don't exist
