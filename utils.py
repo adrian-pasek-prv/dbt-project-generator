@@ -3,7 +3,7 @@ from typing import Optional
 from pathlib import Path
 
 ROOT_DIR = "."
-RESOURCE_TYPES = ["models", "data_tests", "seeds", "macros"]
+RESOURCE_TYPES = ["models", "data_tests", "seeds", "macros", "snapshots"]
 MODELING_LAYERS = {
     "intermediate": "int",
     "staging": ["stg", "base"],
@@ -268,9 +268,50 @@ def create_base_path(
                 f"{prefix}_utils__example_cents_to_dollars.sql",
             )
         )
+    elif resource_type == "snapshots":
+        prefix = "snapshot"
+        # Add snapshot per domain/organization
+        base_path = [organization, domain] if organization else [domain]
+        name_prefix = (
+            f"_{prefix}_{organization}_{domain}"
+            if organization
+            else f"_{prefix}_{domain}"
+        )
+        add_metadata_files(
+            paths, root_dir, resource_type, base_path, name_prefix, metadata_files
+        )
+        name_parts = (
+            [prefix, organization, domain] if organization else [prefix, domain]
+        )
+        paths.add(
+            join_path(
+                root_dir,
+                resource_type,
+                *base_path,
+                f"{'_'.join(name_parts)}__example_snapshot_model.sql",
+            )
+        )
+        # Add snapshot per source system
+        for metadata_file in metadata_files:
+            paths.add(
+                join_path(
+                    root_dir,
+                    resource_type,
+                    source_system,
+                    f"_{prefix}_{source_system}{metadata_file}",
+                )
+            )
+        paths.add(
+            join_path(
+                root_dir,
+                resource_type,
+                source_system,
+                f"{prefix}_{source_system}__example_snapshot_model.sql",
+            )
+        )
 
         # Add utilities at the root
-        utilities = ["dbt_project.yml", "README.md", "analyses", "packages.yml"]
+        utilities = ["dbt_project.yml", "README.md", "analyses", "packages.yml", "selectors.yml"]
         for utility in utilities:
             paths.add(os.path.join(root_dir, utility))
     return sorted(paths)
