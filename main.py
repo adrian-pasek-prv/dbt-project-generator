@@ -24,15 +24,28 @@ parser.add_argument(
     help="Comma-separated list of domains",
 )
 
-args = parser.parse_args()
-
-print(args)
-
-paths = generate_project_paths(
-    root_dir="./dbt_core_project",
-    source_systems=["single_platform", "gecad"],
-    domains=["merchant_cash", "core"]
+parser.add_argument(
+    "--organizations",
+    type=list_of_strings,
+    required=False,
+    help="Comma-separated list of organizations",
 )
 
+parser.add_argument(
+    "--print-only",
+    action='store_true',
+    help="Print paths in the terminal"
+)
 
-# create_project_structure(paths, print_only=False)
+args = parser.parse_args()
+
+if __name__ == "__main__":
+
+    paths = generate_project_paths(
+        root_dir=args.root_dir,
+        source_systems=args.source_systems,
+        domains=args.domains,
+    )
+
+    create_project_structure(paths,
+                             print_only=args.print_only)
