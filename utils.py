@@ -269,8 +269,10 @@ def create_base_path(
             )
         )
 
-        # Add dbt_project.yml at the root
-        paths.add(os.path.join(root_dir, "dbt_project.yml"))
+        # Add utilities at the root
+        utilities = ["dbt_project.yml", "README.md", "analyses", "packages.yml"]
+        for utility in utilities:
+            paths.add(os.path.join(root_dir, utility))
     return sorted(paths)
 
 
@@ -330,5 +332,10 @@ def create_project_structure(paths: set, print_only: bool = True) -> None:
         file_path = Path(path)
         # Create parent directories if they don't exist
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        # Touch empty file at the end of path
-        file_path.touch(exist_ok=True)
+        # Touch empty file at the end of path if it contains a file extension
+        # otherwise create the directory
+        if file_path.suffix:
+            file_path.touch(exist_ok=True)
+        else:
+            file_path.mkdir(exist_ok=True, )
+

@@ -8,4 +8,4 @@ paths = generate_project_paths(
     domains=["merchant_cash", "core"]
 )
 
-create_project_structure(paths)
+create_project_structure(paths, print_only=False)
