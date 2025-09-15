@@ -14,6 +14,9 @@ MODEL_TYPES = ["fct", "dim", "mart"]
 DATA_TESTS_TYPES = ["generic", "singular"]
 METADATA_FILES = ["__schema.yml", "__docs.md"]
 
+# Define a custom argument type for a list of strings
+def list_of_strings(arg):
+    return arg.split(',')
 
 def join_path(root_dir: str, resource_type: str, *parts: str) -> str:
     """Join path parts with root directory and resource type."""
